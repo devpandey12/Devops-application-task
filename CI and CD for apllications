@@ -1,0 +1,61 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.4.0
+        with:
+          project_id: Devops Task
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+          
+          
+#Build every microservice using Docker:
+
+      - name: Build microservices
+        run: |
+          docker build -t gcr.io/Devops-task/product-catalogue:${{ github.sha }} ./product-catalogue
+          docker build -t gcr.io/Devops-task/shopfront:${{ github.sha }} ./shopfront
+          docker build -t gcr.io/Devops-task/stock-manager:${{ github.sha }} ./stock-manager
+          
+#Push Docker image to Google Container Registry
+
+      - name: Configure Docker authentication
+        run: |
+          echo ${{ secrets.GCR_SERVICE_ACCOUNT_KEY }} | base64 --decode > /tmp/gcr-key.json
+          gcloud auth activate-service-account --key-file=/tmp/gcr-key.json
+          gcloud auth configure-docker
+
+      - name: Push microservice images
+        run: |
+          docker push gcr.io/Devops-task/product-catalogue:${{ github.sha }}
+          docker push gcr.io/Devops-task/shopfront:${{ github.sha }}
+          docker push gcr.io/Devops-task/stock-manager:${{ github.sha }}
+
+
+##Deploy every service to Kubernetes cluster on GCP using HELM
+
+      - name: Set up Kubernetes cluster
+        run: |
+          gcloud container clusters get-credentials your-cluster-name --region your-region --project your-project-id
+
+      - name: Install HELM
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+      - name: Deploy microservices with HELM
+        run: |
+          helm upgrade --install product-catalogue ./product-catalogue-chart
+          helm upgrade --install shopfront ./shopfront-chart
+          helm upgrade --install stock-manager ./stock-manager-chart
