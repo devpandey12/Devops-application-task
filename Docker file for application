@@ -1,0 +1,126 @@
+# Dockerfile for Product Catalogue
+
+# Use a base image with Maven and Java 8 installed
+FROM maven:3.8.4-openjdk-8 AS builder
+
+# Copy the application source code to the Docker image
+COPY . /app
+
+# Set the working directory
+WORKDIR /app
+
+# Build the application using Maven
+RUN mvn clean install
+
+# Use a new base image with Java 8 installed
+FROM openjdk:8
+
+# Copy the built JAR file from the previous stage
+COPY --from=builder /app/target/app.jar /app/app.jar
+
+# Set the working directory
+WORKDIR /app
+
+# Expose port 8020
+EXPOSE 8020
+
+# Define the startup command
+CMD ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar", "server"]
+
+#Build the docker file 
+docker build -t Product_cataloge .
+
+#Run Docker file 
+
+docker run -p 8020:8020 Product_cataloge
+
+
+__________________________________________________________________________________________________________________________________________________________________________
+
+
+Dockerfile for shopfront
+
+# Dockerfile for Shopfront microservice
+
+# Base image with Java 8 and Maven
+FROM maven:3.8.4-openjdk-8 AS builder
+
+# Copy the source code to the Docker image
+COPY . /app
+
+# Set the working directory
+WORKDIR /app
+
+# Build the microservice using Maven
+RUN mvn clean install 
+
+# Use a new base image with Java 8 only
+FROM openjdk:8
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the built JAR file from the previous stage
+COPY --from=builder /app/target/app.jar /app/app.jar
+
+# Expose port 8010
+EXPOSE 8010
+
+# Start the Shopfront microservice
+CMD ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar", "server"]
+
+#Build the docker file 
+docker build -t shopfront .
+
+#Run Docker file 
+
+docker run -p 8010:8010 shopfront
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Docker file stock manager
+
+# Dockerfile for Stock Manager microservice
+
+# Base image with Java 8 and Maven
+FROM maven:3.8.4-openjdk-8 AS builder
+
+# Copy the source code to the Docker image
+COPY . /app
+
+# Set the working directory
+WORKDIR /app
+
+# Build the microservice using Maven
+RUN mvn clean install -DskipTests
+
+# Use a new base image with Java 8 only
+FROM openjdk:8
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the built JAR file from the previous stage
+COPY --from=builder /app/target/app.jar /app/app.jar
+
+# Expose port 8030
+EXPOSE 8030
+
+# Start the Stock Manager microservice
+CMD ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar", "server"]
+
+#Build the docker file 
+docker build -t stock_manager .
+
+#Run Docker file 
+
+docker run -p 8030:8030 stock_manager
+
+
+
+
+
+
+
+
+
