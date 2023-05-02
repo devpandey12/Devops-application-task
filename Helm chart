@@ -1,0 +1,290 @@
+#Create a directory structure for each microservice, with the following basic files and directories:
+
+product-catalogue-chart/
+  - Chart.yaml
+  - templates/
+    - deployment.yaml
+    - service.yaml
+    - ingress.yaml
+    - certificate.yaml
+
+shopfront-chart/
+  - Chart.yaml
+  - templates/
+    - deployment.yaml
+    - service.yaml
+    - ingress.yaml
+    - certificate.yaml
+
+stock-manager-chart/
+  - Chart.yaml
+  - templates/
+    - deployment.yaml
+    - service.yaml
+    - ingress.yaml
+    - certificate.yaml
+    
+#Populate the Chart.yaml file in each microservice's chart directory with the necessary information
+#for Product-cataloge chart
+
+apiVersion: v2
+name: product-catalogue
+version: 1.0.0
+appVersion: 1.0.0
+description: Helm chart for the Product Catalogue microservice
+
+#for shopfront
+
+apiVersion: v2
+name: shopfront
+version: 1.0.0
+appVersion: 1.0.0
+description: Helm chart for the Shopfront microservice
+
+#for stock manager
+
+apiVersion: v2
+name: Stock-manager
+version: 1.0.0
+appVersion: 1.0.0
+description: Helm chart for the stock-manager microservice
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Create the necessary deployment and service templates for each microservice. 
+
+#templates/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "product-catalogue.fullname" . }}
+  labels:
+    app: {{ include "product-catalogue.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "product-catalogue.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "product-catalogue.name" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8020
+
+
+#templates/service.yaml:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "product-catalogue.fullname" . }}
+spec:
+  selector:
+    app: {{ include "product-catalogue.name" . }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8020
+  type: ClusterIP
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+For shopfront deployment and service templates for each microservice
+
+#templates/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "Shopfront.fullname" . }}
+  labels:
+    app: {{ include "Shopfront.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "Shopfront.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "Shopfront.name" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8010
+            
+#templates/service.yaml:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "Shopfront.fullname" . }}
+spec:
+  selector:
+    app: {{ include "Shopfront.name" . }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8010
+  type: ClusterIP
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+For stock_manager deployment and service templates for each microservice
+
+#templates/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "stock_manager.fullname" . }}
+  labels:
+    app: {{ include "stock_manager.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "stock_manager.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "stock_manager.name" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8030
+
+#templates/service.yaml:
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "stock_manager.fullname" . }}
+spec:
+  selector:
+    app: {{ include "stock_manager.name" . }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8030
+  type: ClusterIP
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Add the Ingress and Certificate templates to expose the services to the internet:
+#templates/ingress.yaml:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "product-catalogue.fullname" . }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "product-catalogue.fullname" . }}
+                port:
+                  number: 80
+
+#templates/certificate.yaml:
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "product-catalogue.fullname" . }}
+spec:
+  secretName: tls-secret
+  issuerRef:
+    name:letsencrypt-prod
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#For Shopfront Ingress and Certificate templates to expose the services to the internet:
+#templates/ingress.yaml:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "Shopfront.fullname" . }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "Shofront.fullname" . }}
+                port:
+                  number: 80
+
+#templates/certificate.yaml:
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "Shofront.fullname" . }}
+spec:
+  secretName: tls-secret
+  issuerRef:
+    name:letsencrypt-prod
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#for Stock manager Ingress and Certificate templates to expose the services to the internet:
+#templates/ingress.yaml:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "stock_manager.fullname" . }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "stock_manager.fullname" . }}
+                port:
+                  number: 80
+
+#templates/certificate.yaml:
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "Stock_manager.fullname" . }}
+spec:
+  secretName: tls-secret
+  issuerRef:
+    name:letsencrypt-prod
+
+
+
+
